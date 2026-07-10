@@ -1,0 +1,31 @@
+# Binaries and build outputs
+/bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Go coverage/profile outputs
+*.coverprofile
+coverage.out
+
+# Dependency/vendor artifacts (uncomment if you vendor)
+# /vendor/
+
+# Environment/local config
+.env
+.env.*
+
+# Local runtime/log files
+*.log
+
+# macOS/editor files
+.DS_Store
+.vscode/
+.idea/
+
+# Docker local overrides
+compose.override.yml

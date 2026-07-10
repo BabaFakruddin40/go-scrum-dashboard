@@ -1,0 +1,21 @@
+/bin/
+/node_modules/
+
+# TypeScript build output
+/dist/
+/*.tsbuildinfo
+
+# Local environment files
+/.env
+/.env.*
+
+# Pulumi local state/history
+/.pulumi/
+
+# Machine-specific kube config copied for local testing
+/kubeconfig.yaml
+
+# OS/editor artifacts
+/.DS_Store
+/.idea/
+/.vscode/
