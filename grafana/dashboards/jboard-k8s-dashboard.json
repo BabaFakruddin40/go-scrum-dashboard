@@ -1,0 +1,76 @@
+{
+  "title": "JBoard Agile Dashboard",
+  "uid": "jboard-agile-dashboard",
+  "version": 3,
+  "schemaVersion": 39,
+  "style": "dark",
+  "refresh": "10s",
+  "time": { "from": "now-6h", "to": "now" },
+  "tags": ["jboard", "scrum", "prometheus"],
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Story Points Completed",
+      "id": 1,
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [{ "expr": "max(scrum_story_points_completed_total)", "refId": "A" }],
+      "options": { "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" }, "graphMode": "none" }
+    },
+    {
+      "type": "stat",
+      "title": "Active Bugs",
+      "id": 2,
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [{ "expr": "max(scrum_active_bugs_count)", "refId": "A" }],
+      "options": { "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" }, "graphMode": "none" }
+    },
+    {
+      "type": "stat",
+      "title": "Sprint Velocity",
+      "id": 3,
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [{ "expr": "max(scrum_sprint_velocity)", "refId": "A" }],
+      "options": { "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" }, "graphMode": "none" }
+    },
+    {
+      "type": "stat",
+      "title": "JBoard Target Up",
+      "id": 4,
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [{ "expr": "sum(up{job=\"scrum-dashboard\"})", "refId": "A" }],
+      "options": { "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" }, "graphMode": "none" }
+    },
+    {
+      "type": "timeseries",
+      "title": "Velocity Trend",
+      "id": 5,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "datasource": "Prometheus",
+      "targets": [{ "expr": "max by (instance) (scrum_sprint_velocity)", "legendFormat": "{{instance}}", "refId": "A" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "Active Bugs Trend",
+      "id": 6,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "datasource": "Prometheus",
+      "targets": [{ "expr": "max by (instance) (scrum_active_bugs_count)", "legendFormat": "{{instance}}", "refId": "A" }]
+    },
+    {
+      "type": "table",
+      "title": "Current Scrum Metrics",
+      "id": 7,
+      "gridPos": { "h": 7, "w": 24, "x": 0, "y": 12 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "scrum_story_points_completed_total", "format": "table", "instant": true, "refId": "A" },
+        { "expr": "scrum_active_bugs_count", "format": "table", "instant": true, "refId": "B" },
+        { "expr": "scrum_sprint_velocity", "format": "table", "instant": true, "refId": "C" }
+      ]
+    }
+  ]
+}

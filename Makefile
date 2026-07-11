@@ -31,3 +31,8 @@ restart:
 
 logs:
 	docker-compose logs -f app
+
+helm:
+	helm repo add aws-ebs-csi-driver https://kubernetes-sigs.github.io/aws-ebs-csi-driver
+	helm repo update
+	helm install aws-ebs-csi-driver aws-ebs-csi-driver/aws-ebs-csi-driver --namespace kube-system

@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jboard
+  template:
+    metadata:
+      labels:
+        app: jboard
+    spec:
+      containers:
+        - name: jboard
+          # Points to your freshly uploaded Amazon ECR Image URL
+          image: 724208363870.dkr.ecr.us-east-1.amazonaws.com/go-scrum-dashboard-c7caf0f:v1
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          env:
+            - name: DATABASE_URL
+              value: postgres://scrum:scrum@postgres:5432/scrum_dashboard?sslmode=disable
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jboard
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: 8080
+  selector:
+    app: jboard

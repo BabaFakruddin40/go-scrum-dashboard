@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          env:
+            - name: POSTGRES_DB
+              value: scrum_dashboard
+            - name: POSTGRES_USER
+              value: scrum
+            - name: POSTGRES_PASSWORD
+              value: scrum
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: postgres-storage
+              mountPath: /var/lib/postgresql/data
+          # Translates Docker Compose Healthcheck to Kubernetes Readiness Probe
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "scrum", "-d", "scrum_dashboard"]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 8
+      volumes:
+        - name: postgres-storage
+          hostPath:
+            path: /mnt/postgres-data
+            type: DirectoryOrCreate
+          
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+spec:
+  ports:
+    - port: 5432
+  selector:
+    app: postgres

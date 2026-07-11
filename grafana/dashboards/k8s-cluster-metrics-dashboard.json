@@ -1,0 +1,109 @@
+{
+  "title": "Kubernetes Cluster Inventory Dashboard",
+  "uid": "k8s-cluster-inventory",
+  "version": 3,
+  "schemaVersion": 39,
+  "style": "dark",
+  "refresh": "10s",
+  "time": { "from": "now-6h", "to": "now" },
+  "tags": ["kubernetes", "cluster", "inventory", "kube-state-metrics"],
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Namespaces",
+      "id": 1,
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [{ "expr": "count(kube_namespace_created)", "refId": "A" }],
+      "options": { "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" }, "graphMode": "none" }
+    },
+    {
+      "type": "stat",
+      "title": "Deployments",
+      "id": 2,
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [{ "expr": "count(kube_deployment_created)", "refId": "A" }],
+      "options": { "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" }, "graphMode": "none" }
+    },
+    {
+      "type": "stat",
+      "title": "Services",
+      "id": 3,
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [{ "expr": "count(kube_service_info)", "refId": "A" }],
+      "options": { "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" }, "graphMode": "none" }
+    },
+    {
+      "type": "stat",
+      "title": "Pods",
+      "id": 4,
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [{ "expr": "count(kube_pod_info)", "refId": "A" }],
+      "options": { "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" }, "graphMode": "none" }
+    },
+    {
+      "type": "stat",
+      "title": "Containers",
+      "id": 5,
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [{ "expr": "count(kube_pod_container_info)", "refId": "A" }],
+      "options": { "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" }, "graphMode": "none" }
+    },
+    {
+      "type": "stat",
+      "title": "KSM Target Up",
+      "id": 6,
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [{ "expr": "sum(up{job=\"kube-state-metrics\"})", "refId": "A" }],
+      "options": { "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" }, "graphMode": "none" }
+    },
+    {
+      "type": "timeseries",
+      "title": "Running Pods by Namespace",
+      "id": 7,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "datasource": "Prometheus",
+      "targets": [{ "expr": "sum by (namespace) (kube_pod_status_phase{phase=\"Running\"})", "legendFormat": "{{namespace}}", "refId": "A" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "Deployment Desired vs Available",
+      "id": 8,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "sum by (deployment) (kube_deployment_spec_replicas)", "legendFormat": "{{deployment}} desired", "refId": "A" },
+        { "expr": "sum by (deployment) (kube_deployment_status_replicas_available)", "legendFormat": "{{deployment}} available", "refId": "B" }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Deployments",
+      "id": 9,
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 12 },
+      "datasource": "Prometheus",
+      "targets": [{ "expr": "kube_deployment_status_replicas_available", "format": "table", "instant": true, "refId": "A" }]
+    },
+    {
+      "type": "table",
+      "title": "Services",
+      "id": 10,
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 12 },
+      "datasource": "Prometheus",
+      "targets": [{ "expr": "kube_service_info", "format": "table", "instant": true, "refId": "A" }]
+    },
+    {
+      "type": "table",
+      "title": "Pods and Containers",
+      "id": 11,
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 12 },
+      "datasource": "Prometheus",
+      "targets": [{ "expr": "kube_pod_container_info", "format": "table", "instant": true, "refId": "A" }]
+    }
+  ]
+}

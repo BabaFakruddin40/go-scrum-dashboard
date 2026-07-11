@@ -1,0 +1,186 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 5s
+
+    scrape_configs:
+      - job_name: 'scrum-dashboard'
+        scrape_interval: 10s
+        scrape_timeout: 5s
+        metrics_path: /metrics
+        honor_timestamps: true
+        static_configs:
+          - targets:
+              - 'jboard:8080'
+              - 'jboard.default.svc.cluster.local:8080'
+              - 'go-scrum-dashboard:8080'
+              - 'go-scrum-dashboard.default.svc.cluster.local:8080'
+            labels:
+              team: scrum
+              component: dashboard
+
+      - job_name: 'kubernetes-apiserver'
+        scrape_interval: 15s
+        scrape_timeout: 10s
+        scheme: https
+        metrics_path: /metrics
+        kubernetes_sd_configs:
+          - role: endpoints
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+          insecure_skip_verify: false
+        relabel_configs:
+          - action: keep
+            source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+            regex: default;kubernetes;https
+          - action: replace
+            source_labels: [__meta_kubernetes_namespace]
+            target_label: namespace
+          - action: replace
+            source_labels: [__meta_kubernetes_service_name]
+            target_label: service
+          - action: replace
+            source_labels: [__meta_kubernetes_pod_name]
+            target_label: pod
+
+      - job_name: 'kube-state-metrics'
+        scrape_interval: 15s
+        scrape_timeout: 10s
+        metrics_path: /metrics
+        static_configs:
+          - targets:
+              - 'kube-state-metrics:8080'
+              - 'kube-state-metrics.default.svc.cluster.local:8080'
+
+      
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      containers:
+        - name: prometheus
+          image: prom/prometheus:v3.13.1-distroless
+          args:
+            - "--config.file=/etc/prometheus/prometheus.yml"
+          ports:
+            - containerPort: 9090
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/prometheus
+      volumes:
+        - name: config-volume
+          configMap:
+            name: prometheus-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+spec:
+  ports:
+    - port: 9090
+  selector:
+    app: prometheus
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kube-state-metrics
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kube-state-metrics
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps", "secrets", "nodes", "pods", "services", "resourcequotas", "replicationcontrollers", "limitranges", "persistentvolumeclaims", "persistentvolumes", "namespaces", "endpoints"]
+    verbs: ["list", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["statefulsets", "daemonsets", "deployments", "replicasets"]
+    verbs: ["list", "watch"]
+  - apiGroups: ["batch"]
+    resources: ["cronjobs", "jobs"]
+    verbs: ["list", "watch"]
+  - apiGroups: ["autoscaling"]
+    resources: ["horizontalpodautoscalers"]
+    verbs: ["list", "watch"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses", "networkpolicies"]
+    verbs: ["list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kube-state-metrics
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kube-state-metrics
+subjects:
+  - kind: ServiceAccount
+    name: kube-state-metrics
+    namespace: default
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kube-state-metrics
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kube-state-metrics
+  template:
+    metadata:
+      labels:
+        app: kube-state-metrics
+    spec:
+      serviceAccountName: kube-state-metrics
+      containers:
+        - name: kube-state-metrics
+          image: registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.13.0
+          ports:
+            - containerPort: 8080
+              name: http-metrics
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "300m"
+              memory: "256Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kube-state-metrics
+spec:
+  selector:
+    app: kube-state-metrics
+  ports:
+    - name: http-metrics
+      port: 8080
+      targetPort: http-metrics
