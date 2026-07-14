@@ -2,6 +2,23 @@ global:
   scrape_interval: 5s
 
 scrape_configs:
-  - job_name: 'go-scrum-dashboard'
+  - job_name: 'scrum-dashboard'
+    scrape_interval: 10s
+    scrape_timeout: 5s
+    metrics_path: /metrics
+    honor_timestamps: true
     static_configs:
-      - targets: ['app:8080']
+      - targets:
+          - 'jboard:8080'
+          - 'jboard.default.svc.cluster.local:8080'
+          - 'go-scrum-dashboard:8080'
+          - 'go-scrum-dashboard.default.svc.cluster.local:8080'
+        labels:
+          team: scrum
+          component: dashboard
+
+  - job_name: 'prometheus'
+    scrape_interval: 10s
+    static_configs:
+      - targets:
+          - 'prometheus:9090'
